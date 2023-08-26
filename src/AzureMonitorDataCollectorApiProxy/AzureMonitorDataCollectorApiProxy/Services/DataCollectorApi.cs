@@ -6,16 +6,71 @@ using AzureMonitorDataCollectorApiProxy.Misc;
 
 namespace AzureMonitorDataCollectorApiProxy.Services
 {
+    /// <inheritdoc />
     public class DataCollectorApi : IDataCollectorApi
     {
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IConfiguration _configuration;
         private readonly string apiVersion = "2016-04-01";
 
+        /// <summary>
+        /// Class constructure.
+        /// </summary>
+        /// <param name="httpClientFactory"></param>
+        /// <param name="configuration"></param>
         public DataCollectorApi(IHttpClientFactory httpClientFactory, IConfiguration configuration)
         {
             _httpClientFactory = httpClientFactory;
             _configuration = configuration;
+        }
+
+        /// <inheritdoc />
+        public async Task<CustomLogPostResultDto> PostCustomLogAsync(string jsonMessage, string logType, string timeStamp = "")
+        {
+            try
+            {
+                // Setup requires vars
+                string logAnalyticsWorkspaceId = GetConfigurationString("LOG__ANALYTICS__WORKSPACE__ID");
+                string logAnalyticsWorkspaceKey = GetConfigurationString("LOG__ANALYTICS__WORKSPACE__KEY");
+                string url = "https://" + logAnalyticsWorkspaceId + ".ods.opinsights.azure.com/api/logs?api-version=" + apiVersion;
+
+                // Build auth signature
+                string datestring = DateTime.UtcNow.ToString("r");
+                var jsonBytes = Encoding.UTF8.GetBytes(jsonMessage);
+                string stringToHash = "POST\n" + jsonBytes.Length + "\napplication/json\n" + "x-ms-date:" + datestring + "\n/api/logs";
+                string hashedString = BuildApiSignature(stringToHash, logAnalyticsWorkspaceKey);
+                string signature = "SharedKey " + logAnalyticsWorkspaceId + ":" + hashedString;
+
+                // Configure HTTP client
+                HttpClient client = _httpClientFactory.CreateClient();
+                client.DefaultRequestHeaders.Add("Accept", "application/json");
+                client.DefaultRequestHeaders.Add("Log-Type", logType);
+                client.DefaultRequestHeaders.Add("Authorization", signature);
+                client.DefaultRequestHeaders.Add("x-ms-date", datestring);
+
+                if (!string.IsNullOrEmpty(timeStamp))
+                {
+                    // Add in optional time generated field if it's specified
+                    client.DefaultRequestHeaders.Add("time-generated-field", timeStamp);
+                }
+
+                // If charset=utf-8 is part of the content-type header, the API call may return forbidden.
+                HttpContent httpContent = new StringContent(jsonMessage, Encoding.UTF8);
+                httpContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+                HttpResponseMessage response = await client.PostAsync(new Uri(url), httpContent).ConfigureAwait(false);
+
+                return GetCustomLogOperationResult(response.StatusCode, response.Content.ReadAsStringAsync().Result);
+            }
+            catch (Exception excep)
+            {
+                Console.WriteLine("API Post Exception: " + excep.Message);
+
+                return new CustomLogPostResultDto
+                {
+                    HttpStatusCode = HttpStatusCode.InternalServerError,
+                    ResponseMessage = "Failed to make call to Log Analytics REST API."
+                };
+            }
         }
 
         /// <summary>
@@ -34,19 +89,16 @@ namespace AzureMonitorDataCollectorApiProxy.Services
             return Convert.ToBase64String(hash);
         }
 
+        /// <summary>
+        /// Reads in app configuration such as environmental variables.
+        /// </summary>
+        /// <param name="configurationSettingName">Name of the app configuration to read.</param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
         private string GetConfigurationString(string configurationSettingName)
         {
-            string? value = _configuration.GetValue<string>(configurationSettingName);
-
-            if (value == null)
-            {
-                // Required environmental variable could not be found
-                throw new Exception(); // TODO
-            }
-            else
-            {
-                return value;
-            }
+            string? value = _configuration.GetValue<string>(configurationSettingName) ?? throw new Exception();
+            return value;
         }
 
         /// <summary>
@@ -56,14 +108,14 @@ namespace AzureMonitorDataCollectorApiProxy.Services
         /// <param name="httpContentResult">Response messages from the completed Data Collector API call.</param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        private CustomLogPostResultDto GetCustomLogOperationResult(HttpStatusCode httpStatusCode, string httpContentResult)
+        private static CustomLogPostResultDto GetCustomLogOperationResult(HttpStatusCode httpStatusCode, string httpContentResult)
         {
             switch (httpStatusCode)
             {
-                case HttpStatusCode.OK when httpContentResult.Contains("TEST", StringComparison.OrdinalIgnoreCase):
+                case HttpStatusCode.OK:
                     return new CustomLogPostResultDto
                     {
-                        HttpStatusCode = HttpStatusCode.BadRequest,
+                        HttpStatusCode = HttpStatusCode.OK,
                         ResponseMessage = "Request received for processing. Operation finished successfully."
                     };
                 case HttpStatusCode.BadRequest when httpContentResult.Contains("InactiveCustomer", StringComparison.OrdinalIgnoreCase):
@@ -153,57 +205,9 @@ namespace AzureMonitorDataCollectorApiProxy.Services
                 default:
                     return new CustomLogPostResultDto
                     {
-                        HttpStatusCode = HttpStatusCode.Accepted,
-                        ResponseMessage = $"Status code {HttpStatusCode.Accepted} received, no specific response message available."
+                        HttpStatusCode = httpStatusCode,
+                        ResponseMessage = $"Status code {(int)httpStatusCode} received, no specific response message available."
                     };
-            }
-        }
-
-        public async Task<CustomLogPostResultDto> PostCustomLogAsync(string jsonMessage, string logType, string timeStamp = "")
-        {
-            try
-            {
-                // Setup requires vars
-                string logAnalyticsWorkspaceId = GetConfigurationString("LOG__ANALYTICS__WORKSPACE__ID");
-                string logAnalyticsWorkspaceKey = GetConfigurationString("LOG__ANALYTICS__WORKSPACE__KEY");
-                string url = "https://" + logAnalyticsWorkspaceId + ".ods.opinsights.azure.com/api/logs?api-version=" + apiVersion;
-
-                // Build auth signature
-                string datestring = DateTime.UtcNow.ToString("r");
-                var jsonBytes = Encoding.UTF8.GetBytes(jsonMessage);
-                string stringToHash = "POST\n" + jsonBytes.Length + "\napplication/json\n" + "x-ms-date:" + datestring + "\n/api/logs";
-                string hashedString = BuildApiSignature(stringToHash, logAnalyticsWorkspaceKey);
-                string signature = "SharedKey " + logAnalyticsWorkspaceId + ":" + hashedString;
-
-                // Configure HTTP client
-                HttpClient client = _httpClientFactory.CreateClient();
-                client.DefaultRequestHeaders.Add("Accept", "application/json");
-                //client.DefaultRequestHeaders.Add("Log-Type", logType);
-                client.DefaultRequestHeaders.Add("Authorization", signature);
-                client.DefaultRequestHeaders.Add("x-ms-date", datestring);
-
-                if (!string.IsNullOrEmpty(timeStamp))
-                {
-                    // Add in optional time generated field if it's specified
-                    client.DefaultRequestHeaders.Add("time-generated-field", timeStamp);
-                }
-
-                // If charset=utf-8 is part of the content-type header, the API call may return forbidden.
-                HttpContent httpContent = new StringContent(jsonMessage, Encoding.UTF8);
-                httpContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-                HttpResponseMessage response = await client.PostAsync(new Uri(url), httpContent);
-
-                return GetCustomLogOperationResult(response.StatusCode, response.Content.ReadAsStringAsync().Result);
-            }
-            catch (Exception excep)
-            {
-                Console.WriteLine("API Post Exception: " + excep.Message);
-
-                return new CustomLogPostResultDto
-                {
-                    HttpStatusCode = HttpStatusCode.InternalServerError,
-                    ResponseMessage = "Failed to make call to Log Analytics REST API."
-                };
             }
         }
     }

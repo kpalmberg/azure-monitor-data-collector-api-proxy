@@ -20,7 +20,7 @@
     },
     "Docker": {
       "commandName": "Docker",
-      "launchBrowser": true,
+      "launchBrowser": false,
       "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}/api/datacollector/customlog",
       "environmentVariables": {
         "ASPNETCORE_URLS": "http://+:80"
