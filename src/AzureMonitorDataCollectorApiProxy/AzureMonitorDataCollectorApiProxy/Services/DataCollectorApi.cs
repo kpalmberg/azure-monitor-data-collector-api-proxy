@@ -7,10 +7,12 @@ namespace AzureMonitorDataCollectorApiProxy.Services
     public class DataCollectorApi : IDataCollectorApi
     {
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IConfiguration _configuration;
         private readonly string apiVersion = "2016-04-01";
 
-        public DataCollectorApi(IHttpClientFactory httpClientFactory) {
+        public DataCollectorApi(IHttpClientFactory httpClientFactory, IConfiguration configuration) {
             _httpClientFactory = httpClientFactory;
+            _configuration = configuration;
         }
 
         /// <summary>
@@ -29,9 +31,9 @@ namespace AzureMonitorDataCollectorApiProxy.Services
             return Convert.ToBase64String(hash);
         }
 
-        private static string GetEnvironmentalVariableString(string environmentalVariableName)
+        private string GetConfigurationString(string configurationSettingName)
         {
-            string? value = Environment.GetEnvironmentVariable(environmentalVariableName);
+            string? value = _configuration.GetValue<string>(configurationSettingName);
 
             if (value == null)
             {
@@ -49,8 +51,8 @@ namespace AzureMonitorDataCollectorApiProxy.Services
             try
             {
                 // Setup requires vars
-                string logAnalyticsWorkspaceId = GetEnvironmentalVariableString("LOG_ANALYTICS_WORKSPACE_ID");
-                string logAnalyticsWorkspaceKey = GetEnvironmentalVariableString("LOG_ANALYTICS_WORKSPACE_KEY");
+                string logAnalyticsWorkspaceId = GetConfigurationString("LOG__ANALYTICS__WORKSPACE__ID");
+                string logAnalyticsWorkspaceKey = GetConfigurationString("LOG__ANALYTICS__WORKSPACE__KEY");
                 string url = "https://" + logAnalyticsWorkspaceId + ".ods.opinsights.azure.com/api/logs?api-version=" + apiVersion;
 
                 // Build auth signature
