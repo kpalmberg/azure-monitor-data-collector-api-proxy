@@ -1,7 +1,9 @@
-﻿namespace AzureMonitorDataCollectorApiProxy.Services
+﻿using AzureMonitorDataCollectorApiProxy.Misc;
+
+namespace AzureMonitorDataCollectorApiProxy.Services
 {
     public interface IDataCollectorApi
     {
-        public Task PostCustomLogAsync(string jsonMessage, string logType, string timeStamp = "");
+        public Task<CustomLogPostResultDto> PostCustomLogAsync(string jsonMessage, string logType, string timeStamp = "");
     }
 }

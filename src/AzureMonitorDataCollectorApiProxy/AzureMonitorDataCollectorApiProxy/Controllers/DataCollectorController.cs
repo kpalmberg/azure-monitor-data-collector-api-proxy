@@ -1,4 +1,5 @@
-﻿using AzureMonitorDataCollectorApiProxy.Services;
+﻿using AzureMonitorDataCollectorApiProxy.Misc;
+using AzureMonitorDataCollectorApiProxy.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
@@ -29,8 +30,8 @@ namespace AzureMonitorDataCollectorApiProxy.Controllers
             }
 
             string stringData = Convert.ToString(jsonData);
-            await _dataCollectorApi.PostCustomLogAsync(stringData, logTypeHeader);
-            return StatusCode(400, "Test");
+            CustomLogPostResultDto dto = await _dataCollectorApi.PostCustomLogAsync(stringData, logTypeHeader).ConfigureAwait(false);
+            return StatusCode((int)dto.HttpStatusCode, dto.ResponseMessage);
         }
     }
 }
