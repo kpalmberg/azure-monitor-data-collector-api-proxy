@@ -3,23 +3,25 @@ using System.Text;
 using System.Net.Http.Headers;
 using System.Net;
 using AzureMonitorDataCollectorApiProxy.Misc;
+using AzureMonitorDataCollectorApiProxy.Exceptions;
+using AzureMonitorDataCollectorApiProxy.Constants;
 
 namespace AzureMonitorDataCollectorApiProxy.Services
 {
     /// <inheritdoc />
     public class DataCollectorApi : IDataCollectorApi
     {
+        private readonly ILogger<DataCollectorApi> _logger;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IConfiguration _configuration;
         private readonly string apiVersion = "2016-04-01";
 
         /// <summary>
-        /// Class constructure.
+        /// Initializes a new instance of the <see cref="DataCollectorApi"/> class.
         /// </summary>
-        /// <param name="httpClientFactory"></param>
-        /// <param name="configuration"></param>
-        public DataCollectorApi(IHttpClientFactory httpClientFactory, IConfiguration configuration)
+        public DataCollectorApi(ILogger<DataCollectorApi> logger, IHttpClientFactory httpClientFactory, IConfiguration configuration)
         {
+            _logger = logger;
             _httpClientFactory = httpClientFactory;
             _configuration = configuration;
         }
@@ -61,9 +63,9 @@ namespace AzureMonitorDataCollectorApiProxy.Services
 
                 return GetCustomLogOperationResult(response.StatusCode, response.Content.ReadAsStringAsync().Result);
             }
-            catch (Exception excep)
+            catch (MissingAppConfigurationException ex)
             {
-                Console.WriteLine("API Post Exception: " + excep.Message);
+                _logger.LogError(ex, InternalErrorMessages.MissingRequiredAppSetting);
 
                 return new CustomLogPostResultDto
                 {
@@ -97,7 +99,7 @@ namespace AzureMonitorDataCollectorApiProxy.Services
         /// <exception cref="Exception"></exception>
         private string GetConfigurationString(string configurationSettingName)
         {
-            string? value = _configuration.GetValue<string>(configurationSettingName) ?? throw new Exception();
+            string? value = _configuration.GetValue<string>(configurationSettingName) ?? throw new MissingAppConfigurationException(InternalErrorMessages.MissingRequiredAppSetting);
             return value;
         }
 

@@ -5,7 +5,7 @@ namespace AzureMonitorDataCollectorApiProxy.Misc
     /// <summary>
     /// 
     /// </summary>
-    public class CustomLogPostResultDto
+    public class ErrorDto
     {
         /// <summary>
         /// Status code to return to the user.
