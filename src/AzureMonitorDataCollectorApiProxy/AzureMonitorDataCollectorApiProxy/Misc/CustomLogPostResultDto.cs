@@ -10,7 +10,7 @@ namespace AzureMonitorDataCollectorApiProxy.Misc
         /// <summary>
         /// Status code to return to the user.
         /// </summary>
-        public HttpStatusCode HttpStatusCode { get; set; }
+        public int HttpStatusCode { get; set; }
 
         /// <summary>
         /// Response message to return to the user.

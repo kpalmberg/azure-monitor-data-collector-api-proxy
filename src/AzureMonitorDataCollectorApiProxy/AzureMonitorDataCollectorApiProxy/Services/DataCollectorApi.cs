@@ -61,7 +61,7 @@ namespace AzureMonitorDataCollectorApiProxy.Services
                 httpContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
                 HttpResponseMessage response = await client.PostAsync(new Uri(url), httpContent).ConfigureAwait(false);
 
-                return GetCustomLogOperationResult(response.StatusCode, response.Content.ReadAsStringAsync().Result);
+                return GetCustomLogOperationResult((int)response.StatusCode, response.Content.ReadAsStringAsync().Result);
             }
             catch (MissingAppConfigurationException ex)
             {
@@ -69,7 +69,7 @@ namespace AzureMonitorDataCollectorApiProxy.Services
 
                 return new CustomLogPostResultDto
                 {
-                    HttpStatusCode = HttpStatusCode.InternalServerError,
+                    HttpStatusCode = StatusCodes.Status500InternalServerError,
                     ResponseMessage = "Failed to make call to Log Analytics REST API."
                 };
             }
@@ -110,105 +110,105 @@ namespace AzureMonitorDataCollectorApiProxy.Services
         /// <param name="httpContentResult">Response messages from the completed Data Collector API call.</param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        private static CustomLogPostResultDto GetCustomLogOperationResult(HttpStatusCode httpStatusCode, string httpContentResult)
+        private static CustomLogPostResultDto GetCustomLogOperationResult(int httpStatusCode, string httpContentResult)
         {
             switch (httpStatusCode)
             {
-                case HttpStatusCode.OK:
+                case StatusCodes.Status200OK:
                     return new CustomLogPostResultDto
                     {
-                        HttpStatusCode = HttpStatusCode.OK,
+                        HttpStatusCode = StatusCodes.Status200OK,
                         ResponseMessage = "Request received for processing. Operation finished successfully."
                     };
-                case HttpStatusCode.BadRequest when httpContentResult.Contains("InactiveCustomer", StringComparison.OrdinalIgnoreCase):
+                case StatusCodes.Status400BadRequest when httpContentResult.Contains("InactiveCustomer", StringComparison.OrdinalIgnoreCase):
                     return new CustomLogPostResultDto
                     {
-                        HttpStatusCode = HttpStatusCode.BadRequest,
+                        HttpStatusCode = StatusCodes.Status400BadRequest,
                         ResponseMessage = "The workspace has been closed."
                     };
-                case HttpStatusCode.BadRequest when httpContentResult.Contains("InvalidApiVersion", StringComparison.OrdinalIgnoreCase):
+                case StatusCodes.Status400BadRequest when httpContentResult.Contains("InvalidApiVersion", StringComparison.OrdinalIgnoreCase):
                     return new CustomLogPostResultDto
                     {
-                        HttpStatusCode = HttpStatusCode.BadRequest,
+                        HttpStatusCode = StatusCodes.Status400BadRequest,
                         ResponseMessage = "The API version that you specified wasn't recognized by the service."
                     };
-                case HttpStatusCode.BadRequest when httpContentResult.Contains("InvalidCustomerId", StringComparison.OrdinalIgnoreCase):
+                case StatusCodes.Status400BadRequest when httpContentResult.Contains("InvalidCustomerId", StringComparison.OrdinalIgnoreCase):
                     return new CustomLogPostResultDto
                     {
-                        HttpStatusCode = HttpStatusCode.BadRequest,
+                        HttpStatusCode = StatusCodes.Status400BadRequest,
                         ResponseMessage = "The specified workspace ID is invalid."
                     };
-                case HttpStatusCode.BadRequest when httpContentResult.Contains("InvalidDataFormat", StringComparison.OrdinalIgnoreCase):
+                case StatusCodes.Status400BadRequest when httpContentResult.Contains("InvalidDataFormat", StringComparison.OrdinalIgnoreCase):
                     return new CustomLogPostResultDto
                     {
-                        HttpStatusCode = HttpStatusCode.BadRequest,
+                        HttpStatusCode = StatusCodes.Status400BadRequest,
                         ResponseMessage = "An invalid JSON was submitted. The response body might contain more information about how to resolve the error."
                     };
-                case HttpStatusCode.BadRequest when httpContentResult.Contains("InvalidLogType", StringComparison.OrdinalIgnoreCase):
+                case StatusCodes.Status400BadRequest when httpContentResult.Contains("InvalidLogType", StringComparison.OrdinalIgnoreCase):
                     return new CustomLogPostResultDto
                     {
-                        HttpStatusCode = HttpStatusCode.BadRequest,
+                        HttpStatusCode = StatusCodes.Status400BadRequest,
                         ResponseMessage = "The specified log type contained special characters or numerics."
                     };
-                case HttpStatusCode.BadRequest when httpContentResult.Contains("MissingApiVersion", StringComparison.OrdinalIgnoreCase):
+                case StatusCodes.Status400BadRequest when httpContentResult.Contains("MissingApiVersion", StringComparison.OrdinalIgnoreCase):
                     return new CustomLogPostResultDto
                     {
-                        HttpStatusCode = HttpStatusCode.BadRequest,
+                        HttpStatusCode = StatusCodes.Status400BadRequest,
                         ResponseMessage = "The API version wasn’t specified."
                     };
-                case HttpStatusCode.BadRequest when httpContentResult.Contains("MissingContentType", StringComparison.OrdinalIgnoreCase):
+                case StatusCodes.Status400BadRequest when httpContentResult.Contains("MissingContentType", StringComparison.OrdinalIgnoreCase):
                     return new CustomLogPostResultDto
                     {
-                        HttpStatusCode = HttpStatusCode.BadRequest,
+                        HttpStatusCode = StatusCodes.Status400BadRequest,
                         ResponseMessage = "The content type wasn’t specified."
                     };
-                case HttpStatusCode.BadRequest when httpContentResult.Contains("MissingLogType", StringComparison.OrdinalIgnoreCase):
+                case StatusCodes.Status400BadRequest when httpContentResult.Contains("MissingLogType", StringComparison.OrdinalIgnoreCase):
                     return new CustomLogPostResultDto
                     {
-                        HttpStatusCode = HttpStatusCode.BadRequest,
+                        HttpStatusCode = StatusCodes.Status400BadRequest,
                         ResponseMessage = "The required value log type wasn’t specified."
                     };
-                case HttpStatusCode.BadRequest when httpContentResult.Contains("UnsupportedContentType", StringComparison.OrdinalIgnoreCase):
+                case StatusCodes.Status400BadRequest when httpContentResult.Contains("UnsupportedContentType", StringComparison.OrdinalIgnoreCase):
                     return new CustomLogPostResultDto
                     {
-                        HttpStatusCode = HttpStatusCode.BadRequest,
+                        HttpStatusCode = StatusCodes.Status400BadRequest,
                         ResponseMessage = "The content type wasn't set to application/json."
                     };
-                case HttpStatusCode.Forbidden when httpContentResult.Contains("InvalidAuthorization", StringComparison.OrdinalIgnoreCase):
+                case StatusCodes.Status403Forbidden when httpContentResult.Contains("InvalidAuthorization", StringComparison.OrdinalIgnoreCase):
                     return new CustomLogPostResultDto
                     {
-                        HttpStatusCode = HttpStatusCode.Forbidden,
+                        HttpStatusCode = StatusCodes.Status403Forbidden,
                         ResponseMessage = "The service failed to authenticate the request. Verify that the workspace ID and connection key are valid."
                     };
-                case HttpStatusCode.NotFound:
+                case StatusCodes.Status404NotFound:
                     return new CustomLogPostResultDto
                     {
-                        HttpStatusCode = HttpStatusCode.NotFound,
+                        HttpStatusCode = StatusCodes.Status404NotFound,
                         ResponseMessage = "Either the provided URL is incorrect or the request is too large."
                     };
-                case HttpStatusCode.TooManyRequests:
+                case StatusCodes.Status429TooManyRequests:
                     return new CustomLogPostResultDto
                     {
-                        HttpStatusCode = HttpStatusCode.TooManyRequests,
+                        HttpStatusCode = StatusCodes.Status429TooManyRequests,
                         ResponseMessage = "The service is experiencing a high volume of data from your account. Please retry the request later."
                     };
-                case HttpStatusCode.InternalServerError when httpContentResult.Contains("UnspecifiedError", StringComparison.OrdinalIgnoreCase):
+                case StatusCodes.Status500InternalServerError when httpContentResult.Contains("UnspecifiedError", StringComparison.OrdinalIgnoreCase):
                     return new CustomLogPostResultDto
                     {
-                        HttpStatusCode = HttpStatusCode.InternalServerError,
+                        HttpStatusCode = StatusCodes.Status500InternalServerError,
                         ResponseMessage = "The service encountered an internal error. Please retry the request."
                     };
-                case HttpStatusCode.ServiceUnavailable when httpContentResult.Contains("ServiceUnavailable", StringComparison.OrdinalIgnoreCase):
+                case StatusCodes.Status503ServiceUnavailable when httpContentResult.Contains("ServiceUnavailable", StringComparison.OrdinalIgnoreCase):
                     return new CustomLogPostResultDto
                     {
-                        HttpStatusCode = HttpStatusCode.ServiceUnavailable,
+                        HttpStatusCode = StatusCodes.Status503ServiceUnavailable,
                         ResponseMessage = "The service currently is unavailable to receive requests. Please retry your request."
                     };
                 default:
                     return new CustomLogPostResultDto
                     {
                         HttpStatusCode = httpStatusCode,
-                        ResponseMessage = $"Status code {(int)httpStatusCode} received, no specific response message available."
+                        ResponseMessage = $"Status code {httpStatusCode} received, no specific response message available."
                     };
             }
         }

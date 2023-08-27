@@ -47,7 +47,7 @@ namespace AzureMonitorDataCollectorApiProxy.Controllers
             {
                 CustomLogPostResultDto missingLogTypeDto = new()
                 {
-                    HttpStatusCode = HttpStatusCode.BadRequest,
+                    HttpStatusCode = StatusCodes.Status400BadRequest,
                     ResponseMessage = "Missing required 'Log-Type' request header."
                 };
 
@@ -56,7 +56,7 @@ namespace AzureMonitorDataCollectorApiProxy.Controllers
 
             string stringData = Convert.ToString(jsonData);
             CustomLogPostResultDto dto = await _dataCollectorApi.PostCustomLogAsync(stringData, logTypeHeader).ConfigureAwait(false);
-            return StatusCode((int)dto.HttpStatusCode, dto);
+            return StatusCode(dto.HttpStatusCode, dto);
         }
     }
 }
