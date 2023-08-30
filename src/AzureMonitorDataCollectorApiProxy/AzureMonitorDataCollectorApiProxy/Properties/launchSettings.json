@@ -23,7 +23,7 @@
       "launchBrowser": false,
       "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}/api/datacollector/customlog",
       "environmentVariables": {
-        "ASPNETCORE_URLS": "http://+:8080"
+        "ASPNETCORE_URLS": "http://+:5000"
       },
       "publishAllPorts": true
     }

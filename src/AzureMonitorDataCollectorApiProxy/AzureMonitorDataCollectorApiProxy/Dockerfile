@@ -1,8 +1,8 @@
-FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS base
+FROM mcr.microsoft.com/dotnet/aspnet:6.0.21-alpine3.18-amd64 AS base
 WORKDIR /app
-EXPOSE 8080
+EXPOSE 5000
 
-FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:6.0.413-alpine3.18-amd64 AS build
 WORKDIR /src
 COPY ["AzureMonitorDataCollectorApiProxy/AzureMonitorDataCollectorApiProxy.csproj", "AzureMonitorDataCollectorApiProxy/"]
 RUN dotnet restore "AzureMonitorDataCollectorApiProxy/AzureMonitorDataCollectorApiProxy.csproj"
