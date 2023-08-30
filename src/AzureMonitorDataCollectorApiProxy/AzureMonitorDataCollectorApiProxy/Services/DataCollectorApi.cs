@@ -5,6 +5,7 @@ using System.Net;
 using AzureMonitorDataCollectorApiProxy.Misc;
 using AzureMonitorDataCollectorApiProxy.Exceptions;
 using AzureMonitorDataCollectorApiProxy.Constants;
+using AzureMonitorDataCollectorApiProxy.Extensions;
 
 namespace AzureMonitorDataCollectorApiProxy.Services
 {
@@ -65,7 +66,7 @@ namespace AzureMonitorDataCollectorApiProxy.Services
             }
             catch (MissingAppConfigurationException ex)
             {
-                _logger.LogError(ex, InternalErrorMessages.MissingRequiredAppSetting);
+                _logger.QuickLogErrorWithException(InternalErrorMessages.MissingRequiredAppSetting, ex);
 
                 return new CustomLogPostResultDto
                 {

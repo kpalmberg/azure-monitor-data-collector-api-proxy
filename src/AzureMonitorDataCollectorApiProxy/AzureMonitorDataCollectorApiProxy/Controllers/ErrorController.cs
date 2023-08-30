@@ -1,4 +1,5 @@
 ﻿using AzureMonitorDataCollectorApiProxy.Constants;
+using AzureMonitorDataCollectorApiProxy.Extensions;
 using AzureMonitorDataCollectorApiProxy.Misc;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
@@ -30,10 +31,9 @@ namespace AzureMonitorDataCollectorApiProxy.Controllers
         [ProducesResponseType(typeof(ErrorDto), StatusCodes.Status500InternalServerError)]
         public IActionResult ExceptionHandler()
         {
-            var context = HttpContext.Features.Get<IExceptionHandlerFeature>()!;
-            var exception = context?.Error;
+            var exceptionHandlerFeature = HttpContext.Features.Get<IExceptionHandlerFeature>()!;
+            _logger.QuickLogError(exceptionHandlerFeature.Error.Message);
 
-            _logger.LogError(exception, "An API exception occurred. See exception log for details.");
             ErrorDto errorDto = new()
             { 
                 HttpStatusCode = HttpStatusCode.InternalServerError,
