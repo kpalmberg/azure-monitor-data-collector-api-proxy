@@ -8,6 +8,6 @@
         /// <summary>
         /// Error messages for missing required application settings/configuration.
         /// </summary>
-        internal const string MissingRequiredAppSetting = "INT-ID10000: Missing required application configuration setting.";
+        internal const string MissingRequiredAppSetting = "Missing required application configuration setting.";
     }
 }
