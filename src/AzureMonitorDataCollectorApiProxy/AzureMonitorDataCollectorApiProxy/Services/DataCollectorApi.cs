@@ -45,7 +45,9 @@ namespace AzureMonitorDataCollectorApiProxy.Services
                 string signature = "SharedKey " + logAnalyticsWorkspaceId + ":" + hashedString;
 
                 // Configure HTTP client
+                #pragma warning disable CA2000 // HTTP client factory manages client lifetime
                 HttpClient client = _httpClientFactory.CreateClient();
+                #pragma warning restore CA2000
                 client.DefaultRequestHeaders.Add("Accept", "application/json");
                 client.DefaultRequestHeaders.Add("Log-Type", logType);
                 client.DefaultRequestHeaders.Add("Authorization", signature);
@@ -58,7 +60,7 @@ namespace AzureMonitorDataCollectorApiProxy.Services
                 }
 
                 // If charset=utf-8 is part of the content-type header, the API call may return forbidden.
-                HttpContent httpContent = new StringContent(jsonMessage, Encoding.UTF8);
+                using HttpContent httpContent = new StringContent(jsonMessage, Encoding.UTF8);
                 httpContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
                 HttpResponseMessage response = await client.PostAsync(new Uri(url), httpContent).ConfigureAwait(false);
 
